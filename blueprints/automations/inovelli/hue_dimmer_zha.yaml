@@ -115,8 +115,9 @@ variables:
   sync_flag: "input_boolean.sync_{{ room_lower }}"
   scene_index: "input_number.scene_index_{{ room_lower }}"
   available_scenes: >
-    {% set prefix = 'scene.' ~ room_lower ~ '_' %}
-    {{ states.scene | map(attribute='entity_id') | select('search', prefix) | list | sort }}
+    {% set room_device = device_id(light_entity) %}
+    {{ (device_entities(room_device) if room_device else [])
+       | select('match', 'scene[.]') | list | sort }}
   default_scene_enabled: !input default_scene_enabled
   default_scene: !input default_scene
   brightness_step: !input brightness_step
@@ -213,15 +214,18 @@ action:
           - service: input_boolean.turn_on
             target:
               entity_id: "{{ sync_flag }}"
-          # Get color from light attributes
+          # LED color from light attributes: white light maps to warm (24) or
+          # cool (170) by color temperature; colored light maps its hue (0-360)
+          # onto the Inovelli range (0-255). Falls back to warm white.
           - variables:
               room_color: >
-                {% set s = states[light_entity] %}
-                {% if 'hs_color' in s.attributes %}
-                  # Map Hue value (0-360) directly to Inovelli range (0-255)
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
-                  # Default warm white
                   24
                 {% endif %}
               led_intensity: "{{ ((states[light_entity].attributes.brightness | default(255) | float / 255) * 100) | round(0) | int }}"
@@ -279,7 +283,7 @@ action:
                   - service: system_log.write
                     data:
                       level: error
-                      message: "❌ No scenes found for '{{ room_lower }}'"
+                      message: "❌ No Hue scenes found for '{{ light_entity }}'"
               - conditions: "{{ states(scene_index) == 'unknown' }}"
                 sequence:
                   - service: system_log.write
@@ -308,7 +312,7 @@ action:
                   - service: system_log.write
                     data:
                       level: error
-                      message: "❌ No scenes found for '{{ room_lower }}'"
+                      message: "❌ No Hue scenes found for '{{ light_entity }}'"
               - conditions: "{{ states(scene_index) == 'unknown' }}"
                 sequence:
                   - service: system_log.write
@@ -333,9 +337,12 @@ action:
         sequence:
           - variables:
               room_color: >
-                {% set s = states[light_entity] %}
-                {% if 'hs_color' in s.attributes %}
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
                   24
                 {% endif %}

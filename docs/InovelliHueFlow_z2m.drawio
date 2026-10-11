@@ -93,7 +93,7 @@
         </mxCell>
 
         <!-- Hue Scenes -->
-        <mxCell id="hue-scenes" value="Hue Scenes&lt;br/&gt;&lt;font style=&quot;font-size:8px;&quot;&gt;scene.&lt;room&gt;_*&lt;br/&gt;(auto-discovered)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=9;arcSize=15;" vertex="1" parent="1">
+        <mxCell id="hue-scenes" value="Hue Scenes&lt;br/&gt;&lt;font style=&quot;font-size:8px;&quot;&gt;all scenes in the room&lt;br/&gt;(auto-discovered)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=9;arcSize=15;" vertex="1" parent="1">
           <mxGeometry x="758" y="215" width="140" height="50" as="geometry" />
         </mxCell>
 

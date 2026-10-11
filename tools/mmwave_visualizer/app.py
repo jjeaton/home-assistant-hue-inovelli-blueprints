@@ -284,8 +284,7 @@ def build_timeline_figure(
     fig = go.Figure()
 
     for eid, label in ordered:
-        idx = list(entity_labels.keys()).index(eid)
-        color = AREA_COLORS[max(0, idx - 1)] if label != "Overall" else "#78909C"
+        color = AREA_COLORS[AREA_LABELS.index(label)] if label != "Overall" else "#78909C"
         y = y_map[eid]
 
         for seg in (s for s in segments if s["entity_id"] == eid and s["state"] == "on"):
@@ -775,7 +774,7 @@ def fetch_history(_, ha_url, token, occ, a1, a2, a3, a4):
             s["start"] = s["start"].isoformat()
             s["end"] = s["end"].isoformat()
         on_count = sum(1 for s in segs if s["state"] == "on")
-        return {"segments": segs, "entities": entities}, f"✓ {on_count} presence events loaded."
+        return {"segments": segs}, f"✓ {on_count} presence events loaded."
     except requests.HTTPError as exc:
         return None, f"HTTP {exc.response.status_code}: {exc.response.text[:60]}"
     except Exception as exc:  # noqa: BLE001
@@ -804,7 +803,7 @@ def _deserialise(store_data):
     for s in segs:
         s["start"] = datetime.fromisoformat(s["start"])
         s["end"] = datetime.fromisoformat(s["end"])
-    return segs, (store_data or {}).get("entities", [])
+    return segs
 
 
 def _parse_fp(start_str, end_str):
@@ -816,12 +815,12 @@ def _parse_fp(start_str, end_str):
         return None, None
 
 
-def _build_zones(entities, zone_vals):
-    area_entities = entities[1:] if len(entities) > 1 else []
+def _build_zones(area_entities, zone_vals):
+    """area_entities is the four Area inputs in order; blanks keep their slot."""
     zones = []
     for i, (x1, x2, y1, y2, z1, z2) in enumerate(zone_vals):
         zones.append({
-            "entity_id": area_entities[i] if i < len(area_entities) else "",
+            "entity_id": area_entities[i] or "",
             "configured": all(v is not None for v in (x1, x2, y1, y2, z1, z2)),
             "x_min": x1 or 0, "x_max": x2 or 0,
             "y_min": y1 or 0, "y_max": y2 or 0,
@@ -865,12 +864,7 @@ def update_views(
     fp_start_str, fp_end_str,
 ):
     triggered = ctx.triggered_id
-    segs, entities = _deserialise(store_data)
-
-    # Resolve entities list from current inputs (store may lag behind)
-    all_entities = [e for e in [occ, a1, a2, a3, a4] if e]
-    if all_entities:
-        entities = all_entities
+    segs = _deserialise(store_data)
 
     zone_vals = [
         (z1x1, z1x2, z1y1, z1y2, z1z1, z1z2),
@@ -878,7 +872,7 @@ def update_views(
         (z3x1, z3x2, z3y1, z3y2, z3z1, z3z2),
         (z4x1, z4x2, z4y1, z4y2, z4z1, z4z2),
     ]
-    zones = _build_zones(entities, zone_vals)
+    zones = _build_zones([a1, a2, a3, a4], zone_vals)
 
     fp_start, fp_end = None, None
     if triggered == "analyze-btn":

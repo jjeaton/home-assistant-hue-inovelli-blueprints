@@ -5,6 +5,9 @@
 #   - input_boolean.sync_<room>        : Prevents sync trigger loops (required)
 #   - input_number.scene_index_<room>  : Tracks active Hue scene (required for scene cycling)
 #
+# <room> is the part of the Hue light entity ID after "light." — for a Hue room
+# named "Living Room" the entity is light.living_room, so <room> is living_room.
+#
 # The separate ZHA dimmer script blueprint must also be deployed and referenced
 # from the automation.
 #
@@ -30,6 +33,15 @@ input_boolean:
     name: Sync - Office
     icon: mdi:sync
 
+  # ── Living Room (Hue room name with a space → light.living_room) ─────────────
+  dimmer_living_room:
+    name: Dimmer - Living Room
+    icon: mdi:lightbulb-on-outline
+
+  sync_living_room:
+    name: Sync - Living Room
+    icon: mdi:sync
+
 input_number:
 
   # ── Bedroom ──────────────────────────────────────────────────────────────────
@@ -45,6 +57,16 @@ input_number:
   # ── Office ───────────────────────────────────────────────────────────────────
   scene_index_office:
     name: Scene Index - Office
+    initial: 0
+    min: 0
+    max: 99
+    step: 1
+    mode: box
+    icon: mdi:order-numeric-ascending
+
+  # ── Living Room ──────────────────────────────────────────────────────────────
+  scene_index_living_room:
+    name: Scene Index - Living Room
     initial: 0
     min: 0
     max: 99

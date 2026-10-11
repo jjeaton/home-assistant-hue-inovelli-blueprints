@@ -1,8 +1,12 @@
-[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FRatoka%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fhue_dimmer_zha.yaml) **ZHA Automation Blueprint**
+[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjjeaton%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fhue_dimmer_zha.yaml) **ZHA Automation Blueprint**
 
-[![Import Script Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FRatoka%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fscripts%2Finovelli%2Fdim_hue_room_lights_zha.yaml) **ZHA Dimming Script Blueprint** *(required for ZHA)*
+[![Import Script Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjjeaton%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fscripts%2Finovelli%2Fdim_hue_room_lights_zha.yaml) **ZHA Dimming Script Blueprint** *(required for ZHA)*
 
-[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FRatoka%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fhue_dimmer_z2m.yaml) **Z2M Automation Blueprint**
+[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjjeaton%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fhue_dimmer_z2m.yaml) **Z2M Automation Blueprint**
+
+[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjjeaton%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fshower_fan_z2m.yaml) **Shower Humidity Fan Blueprint** *(VZM35-SN, Z2M)*
+
+[![Import Automation Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fjjeaton%2Fhome-assistant-hue-inovelli-blueprints%2Fblob%2Fmain%2Fblueprints%2Fautomations%2Finovelli%2Fmmwave_presence_diagnostics_z2m.yaml) **mmWave Presence Diagnostics Blueprint** *(VZM32-SN, Z2M)*
 
 > **Helper entity examples:** See [`examples/helpers_z2m.yaml`](examples/helpers_z2m.yaml) (Z2M) and [`examples/helpers_zha.yaml`](examples/helpers_zha.yaml) (ZHA) for ready-to-paste helper configurations.
 
@@ -14,6 +18,10 @@ This repository contains **dynamic, reusable blueprints** for integrating Inovel
 **Available for:**
 - **ZHA Integration** (via `hue_dimmer_zha.yaml`)
 - **Zigbee2MQTT Integration** (via `hue_dimmer_z2m.yaml`)
+
+**Also included** (independent of the Hue blueprints, Zigbee2MQTT only):
+- [Shower Humidity Fan](#-shower-humidity-fan-vzm35-sn-z2m) for the VZM35-SN fan switch
+- [mmWave Presence Diagnostics](#-mmwave-presence-diagnostics-vzm32-sn-z2m) for the VZM32-SN, with a companion visualizer tool
 
 ---
 
@@ -49,13 +57,16 @@ This repository contains **dynamic, reusable blueprints** for integrating Inovel
 ---
 
 ## Overview
-![Device Overview](/docs/assets/DeviceFlow.png)
+
+The diagram below shows the **ZHA** flow, including the helper entities and dimming script it relies on. The Z2M blueprint needs neither; its flow is in [`docs/InovelliHueFlow_z2m.drawio`](docs/InovelliHueFlow_z2m.drawio) (open it with [draw.io](https://app.diagrams.net/)).
+
+![Device Overview (ZHA)](/docs/assets/DeviceFlow.png)
 
 ---
 
 ## 🚀 Getting Started (ZHA)
 
-1. **Create a Hue Room** in the Hue app (e.g. `Bedroom`). Room name must have no spaces.
+1. **Create a Hue Room** in the Hue app (e.g. `Bedroom` or `Living Room`). Any room name works, including names with spaces.
 2. **Add Hue Scenes** to the room in the Hue app.
 3. **Add your Inovelli Blue switch** to Home Assistant via ZHA.
 4. **Configure the switch** in Home Assistant:
@@ -75,7 +86,9 @@ This repository contains **dynamic, reusable blueprints** for integrating Inovel
    - *(Optional)* **Enable Default Scene / Default Scene** — scene to activate on every turn-on
 9. **Enjoy.**
 
-> The room name is derived automatically from the Hue light group entity (e.g. `light.bedroom` → room = `bedroom`). All helper entity IDs must match this derived name exactly.
+> The room name is derived automatically from the Hue light group entity ID (e.g. `light.bedroom` → room = `bedroom`). All helper entity IDs must match this derived name exactly.
+>
+> **Rooms with spaces:** Home Assistant turns spaces into underscores in entity IDs, so a Hue room called `Living Room` becomes `light.living_room` and the room is `living_room`. Its helpers are `input_boolean.dimmer_living_room`, `input_boolean.sync_living_room` and `input_number.scene_index_living_room`.
 
 ---
 
@@ -100,13 +113,13 @@ Configure the input_number with min: `0`, max: `99`, step: `1`.
 
 > A ready-to-paste example for bedroom and office rooms is in [`examples/helpers_zha.yaml`](examples/helpers_zha.yaml).
 
-> **Scene naming:** Scenes must follow the `scene.<room>_<name>` pattern to be auto-discovered. In the Hue app, scenes are named this way automatically when created inside a room. If you renamed a room, open the room → `(...)` → **Recreate entity IDs**.
+> **Scene discovery:** Every Hue scene that belongs to the selected Hue room or zone is found automatically. Discovery follows the room itself rather than entity names, so it works for room names with spaces and for rooms or scenes you have renamed. Scenes cycle in alphabetical order of their entity IDs.
 
 ---
 
 ## 🧪 Example Setup (ZHA): Room = `Bedroom`
 
-1. In the Hue app, create a room named `Bedroom` (no spaces)
+1. In the Hue app, create a room named `Bedroom`
    - Add lights to the room
    - Add scenes (e.g., `Relax`, `Energize`, `Read`)
 2. In Home Assistant, create the required helpers:
@@ -135,7 +148,7 @@ Your Inovelli switch will now:
 
 ## 🚀 Getting Started (Z2M)
 
-1. **Create a Hue Room** in the Hue app (e.g. `Bedroom`). Room name must have no spaces.
+1. **Create a Hue Room** in the Hue app (e.g. `Bedroom` or `Living Room`). Any room name works, including names with spaces.
 2. **Add Hue Scenes** to the room in the Hue app.
 3. **Add your Inovelli Blue switch** to Home Assistant via Zigbee2MQTT.
 4. **Configure the switch** in Home Assistant:
@@ -174,7 +187,7 @@ Configure the input_number with min: `0`, max: `99`, step: `1`.
 
 > A ready-to-paste example for bedroom and office rooms is in [`examples/helpers_z2m.yaml`](examples/helpers_z2m.yaml).
 
-> **Scene naming:** Scenes must follow the `scene.<room>_<name>` pattern to be auto-discovered. In the Hue app, scenes are named this way automatically when created inside a room. If you renamed a room, open the room → `(...)` → **Recreate entity IDs**.
+> **Scene discovery:** Every Hue scene that belongs to the selected Hue room or zone is found automatically. Discovery follows the room itself rather than entity names, so it works for room names with spaces and for rooms or scenes you have renamed. Scenes cycle in alphabetical order of their entity IDs.
 
 ---
 
@@ -222,7 +235,7 @@ Older versions of the Z2M HA integration may create an action sensor automatical
 
 ## 🧪 Example Setup (Z2M): Room = `Bedroom`
 
-1. In the Hue app, create a room named `Bedroom` (no spaces)
+1. In the Hue app, create a room named `Bedroom`
    - Add lights to the room
    - Add scenes (e.g., `Relax`, `Energize`, `Read`)
 2. *(Optional)* In Home Assistant, create one helper for scene cycling:
@@ -253,11 +266,54 @@ Your Inovelli switch will now:
 
 | Issue | Fix |
 |-------|-----|
-| Scenes not cycling | Scenes must follow `scene.<room>_*` naming. In the Hue app, open the room → `(...)` → **Recreate entity IDs** to fix renamed rooms. Also verify the Scene Index Helper entity ID is entered correctly. |
+| Scenes not cycling | Confirm the Light Group you selected is a Hue **room or zone** (not a single bulb or a Home Assistant light group) and that it has scenes in the Hue app. Also verify the scene index helper exists: for Z2M it must be selected in the blueprint; for ZHA it must be named `input_number.scene_index_<room>`. |
 | Action sensor not found | Press a button on the switch, then search Developer Tools → States for `_action`. Confirm Z2M is running and the device is paired. |
 | Wrong Z2M device name | The Z2M Device Name must exactly match the friendly name in the Z2M dashboard (case-sensitive). |
-| Lights not turning on/off | Verify the Hue room entity name has no spaces. If you renamed the room, recreate entity IDs in the Hue app. |
+| Lights not turning on/off (ZHA) | The helper entity IDs must match the room part of the Hue light entity ID exactly (e.g. `light.living_room` → `input_boolean.sync_living_room` and `input_boolean.dimmer_living_room`). |
 | LED color not updating | Confirm the Z2M Device Name matches your Z2M config exactly. |
+
+---
+
+## 🚿 Shower Humidity Fan (VZM35-SN, Z2M)
+
+`shower_fan_z2m.yaml` turns a bathroom exhaust fan on when humidity rises and off again once the room has dried out. It is independent of the Hue blueprints and needs no helpers.
+
+- **On:** room humidity rises above the **On Threshold**. If a **Reference Humidity Sensor** is selected (hallway, bedroom, outdoors), the room must also exceed it by the **Humidity Delta**, which stops the fan running on humid or rainy days. If the reference sensor is unavailable, only the On Threshold is used.
+- **Off:** humidity falls below the **Off Threshold**, then the fan waits out any remaining **Minimum Run Time**, then the **Off Delay**, and re-checks humidity before switching off. If humidity climbs back above the On Threshold while it is waiting, the fan stays on.
+
+| Input | Default | Notes |
+|-------|---------|-------|
+| Fan Entity | – | The VZM35-SN fan entity from Zigbee2MQTT |
+| Room Humidity Sensor | – | Drives all on/off decisions |
+| Reference Humidity Sensor | *(none)* | Optional |
+| Humidity On Threshold | 70 % | Set above your normal resting humidity |
+| Humidity Delta Above Reference | 8 % | Only used with a reference sensor |
+| Humidity Off Threshold | 60 % | Keep below the On Threshold to avoid rapid cycling |
+| Minimum Run Time | 15 min | |
+| Off Delay After Humidity Drops | 5 min | |
+
+---
+
+## 📡 mmWave Presence Diagnostics (VZM32-SN, Z2M)
+
+`mmwave_presence_diagnostics_z2m.yaml` is a troubleshooting aid for mmWave false positives. Each time the switch reports presence it posts a Home Assistant notification showing which of the four detection areas were active, and when presence clears it reports how long the detection lasted. Short detections in an empty room point to a false positive. Disable the automation once your zones are tuned.
+
+1. Create one automation per VZM32-SN and select its **Occupancy Sensor**.
+2. *(Optional)* Select the **Area 1–4 Occupancy** sensors. These only exist once the `manuSpecificInovelliMMWave` cluster is bound to Source endpoint 1 in the Zigbee2MQTT **Bind** tab.
+3. *(Optional)* Set a **Location Label**, and an **Additional Notify Service** (service name without the `notify.` prefix) to also receive the reports on your phone.
+4. Leave the room, wait for a false positive, and note which areas were flagged.
+5. In Zigbee2MQTT → device → **Configure**, add an Interference Area covering that zone. Repeat until the false positives stop.
+
+### Visualizer tool
+
+`tools/mmwave_visualizer/` is a small local web app for deeper analysis. It reads the last 24 hours of sensor history from Home Assistant, draws your detection zones in 3D with a timeline of presence events, and generates Interference Area settings for a time window you select.
+
+```sh
+pip install -r tools/mmwave_visualizer/requirements.txt
+python tools/mmwave_visualizer/app.py
+```
+
+Then open <http://localhost:8050> and enter your Home Assistant URL, a long-lived access token (Profile → Security), the sensor entity IDs, and the same X/Y/Z zone bounds you configured in Zigbee2MQTT.
 
 ---
 

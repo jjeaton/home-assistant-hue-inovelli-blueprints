@@ -46,7 +46,7 @@ mqtt:
 input_number:
 
   # Bedroom — tracks the currently active Hue scene index (0-based).
-  # Scenes are discovered automatically via the scene.bedroom_* prefix.
+  # Scenes are discovered automatically from the Hue room selected in the blueprint.
   scene_index_bedroom:
     name: Scene Index - Bedroom
     initial: 0

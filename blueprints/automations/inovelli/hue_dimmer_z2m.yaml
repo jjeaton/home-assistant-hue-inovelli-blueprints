@@ -92,8 +92,8 @@ blueprint:
         To enable scene cycling with the config button, first create an input_number helper
         (Settings → Helpers → Add → Number, min: 0, max: 99, step: 1), then select it here.
         Leave unselected to disable scene cycling entirely.
-        Scenes are discovered automatically by matching scene.<room>_* where room is derived
-        from your Hue light group entity name (e.g., light.bedroom → scene.bedroom_*).
+        Scenes are discovered automatically: every Hue scene that belongs to the room or
+        zone selected as the Hue Light Group is included, whatever the room is called.
       default: ""
       selector:
         entity:
@@ -109,8 +109,9 @@ blueprint:
       name: Default Scene
       description: >
         Scene to activate when the light group turns on (only used if enabled above).
-        Only Hue scenes are shown. Hue scenes follow the pattern scene.<room>_<name>
-        (e.g., scene.bedroom_relax). Pick one that matches your Hue light group.
+        Only Hue scenes are shown. By default Hue scenes are named scene.<room>_<name>
+        (e.g., scene.bedroom_relax, scene.living_room_relax). Pick one that belongs to
+        your Hue light group.
         Note: HA blueprint selectors cannot dynamically filter scenes to only the selected room —
         all Hue scenes are shown, so choose carefully.
       default: ""
@@ -199,11 +200,13 @@ variables:
   scene_index_helper: !input scene_index_helper
   default_scene_enabled: !input default_scene_enabled
   default_scene: !input default_scene
-  # Derive room name from the light entity for scene discovery (e.g. light.bedroom → bedroom)
-  room_lower: "{{ light_entity.split('.')[1] | lower }}"
+  # Scene discovery: the Hue integration attaches a room/zone's light group and its
+  # scenes to the same device, so the scenes are found via that device rather than
+  # by entity ID naming. Works for any room name and for renamed entities.
   available_scenes: >
-    {% set prefix = 'scene.' ~ room_lower ~ '_' %}
-    {{ states.scene | map(attribute='entity_id') | select('search', prefix) | list | sort }}
+    {% set room_device = device_id(light_entity) %}
+    {{ (device_entities(room_device) if room_device else [])
+       | select('match', 'scene[.]') | list | sort }}
   # Current action (empty string for non-button triggers)
   action: "{{ trigger.to_state.state if trigger.id == 'z2m_action' else '' }}"
   # Dimming direction and signed step (+/- brightness_step).
@@ -337,12 +340,12 @@ action:
               milliseconds: 500
           - variables:
               scene_color: >
-                {% set s = states[light_entity] %}
-                {% if s.attributes.color_temp_kelvin is not none %}
-                  {% set ct = s.attributes.color_temp_kelvin | float %}
-                  {{ 24 if ct <= 4000 else 170 }}
-                {% elif s.attributes.hs_color is not none %}
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
                   24
                 {% endif %}
@@ -377,12 +380,12 @@ action:
               milliseconds: 500
           - variables:
               scene_color: >
-                {% set s = states[light_entity] %}
-                {% if s.attributes.color_temp_kelvin is not none %}
-                  {% set ct = s.attributes.color_temp_kelvin | float %}
-                  {{ 24 if ct <= 4000 else 170 }}
-                {% elif s.attributes.hs_color is not none %}
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
                   24
                 {% endif %}
@@ -412,12 +415,12 @@ action:
               milliseconds: 300
           - variables:
               room_color: >
-                {% set s = states[light_entity] %}
-                {% if s.attributes.color_temp_kelvin is not none %}
-                  {% set ct = s.attributes.color_temp_kelvin | float %}
-                  {{ 24 if ct <= 4000 else 170 }}
-                {% elif s.attributes.hs_color is not none %}
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
                   24
                 {% endif %}
@@ -472,12 +475,12 @@ action:
         sequence:
           - variables:
               room_color: >
-                {% set s = states[light_entity] %}
-                {% if s.attributes.color_temp_kelvin is not none %}
-                  {% set ct = s.attributes.color_temp_kelvin | float %}
-                  {{ 24 if ct <= 4000 else 170 }}
-                {% elif s.attributes.hs_color is not none %}
-                  {{ (s.attributes.hs_color[0] / 360 * 255) | int }}
+                {% set ct = state_attr(light_entity, 'color_temp_kelvin') %}
+                {% set hs = state_attr(light_entity, 'hs_color') %}
+                {% if ct is not none %}
+                  {{ 24 if ct | float <= 4000 else 170 }}
+                {% elif hs is not none %}
+                  {{ (hs[0] / 360 * 255) | int }}
                 {% else %}
                   24
                 {% endif %}
