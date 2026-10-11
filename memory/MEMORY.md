@@ -4,7 +4,9 @@
 
 ### Z2M Blueprint (hue_dimmer_z2m.yaml)
 - **mode: restart** is intentional — it terminates the inline dimming loop when release fires
-- Dimming is inlined using `repeat...until: false` (infinite loop killed by restart)
+- Dimming is an inline `repeat` loop setting absolute brightness targets; it ends at 1%/100% or when restart kills it on release
+- `light_settled` is ignored while a run is in progress (top-level condition on `this.attributes.current`) so it cannot kill the dimming loop
+- LED bar height = the switch's own dim level; it is set from the Hue room's brightness in `light_on`, `light_settled` and the double-tap handlers
 - Sync is trigger-based (specific `from/to` state transitions) — no `input_boolean.sync_<room>` needed
 - LED update and default scene run **before** switch turn-on in `light_on` handler to avoid being killed by the subsequent `switch_on` restart
 - `switch_on` and `switch_off` handlers have state checks (`states(light_entity) != 'on'`) to prevent loops

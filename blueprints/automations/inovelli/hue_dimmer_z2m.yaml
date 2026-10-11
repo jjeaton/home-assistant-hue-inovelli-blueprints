@@ -153,7 +153,7 @@ trigger:
     id: light_off
 
   # Light attribute changes while on — catches Hue app scene changes when already on.
-  # 800ms debounce prevents firing during hold dimming (step interval is 400ms).
+  # Debounced by 800ms, and ignored while a run is in progress (see condition below).
   - platform: state
     entity_id: !input light_entity
     attribute: brightness
@@ -190,6 +190,12 @@ condition:
         value_template: "{{ trigger.id != 'z2m_action' }}"
       - condition: template
         value_template: "{{ (now() - trigger.to_state.last_changed).total_seconds() < 30 }}"
+  # light_settled must not interrupt a run that is already in progress. Under
+  # mode: restart it would otherwise kill the hold-dimming loop whenever Hue takes
+  # longer than the debounce to report a brightness step. A failed condition does
+  # not restart the automation, so the running sequence carries on.
+  - condition: template
+    value_template: "{{ trigger.id != 'light_settled' or this.attributes.current | default(0) | int(0) == 0 }}"
 
 variables:
   light_entity: !input light_entity
@@ -267,6 +273,8 @@ action:
           - service: light.turn_on
             target:
               entity_id: "{{ switch_entity }}"
+            data:
+              brightness_pct: 100
           - service: mqtt.publish
             data:
               topic: "zigbee2mqtt/{{ z2m_device_name }}/set"
@@ -286,6 +294,8 @@ action:
           - service: light.turn_on
             target:
               entity_id: "{{ switch_entity }}"
+            data:
+              brightness_pct: 10
           - service: mqtt.publish
             data:
               topic: "zigbee2mqtt/{{ z2m_device_name }}/set"
@@ -293,31 +303,36 @@ action:
 
       # -------------------------------------------------------------------------
       # HOLD (UP or DOWN): Inline dimming loop.
-      # Runs until mode:restart kills it when the release event fires.
-      # LED intensity is updated each step to reflect current brightness.
+      # Each tick sets an absolute brightness counted from where the hold started,
+      # so progress does not depend on how quickly Hue reports its state back.
+      # Ends at 100% or 1%, or when mode:restart kills it on the release event.
+      # Holding down never turns the light off, and does nothing if it is off.
+      # LED intensity is updated each step to reflect the target brightness.
       # -------------------------------------------------------------------------
-      - conditions: "{{ action in ['up_held', 'down_held'] }}"
+      - conditions: "{{ action == 'up_held' or (action == 'down_held' and is_state(light_entity, 'on')) }}"
         sequence:
+          - variables:
+              dim_start: "{{ ((state_attr(light_entity, 'brightness') | float(0) / 255) * 100) | round | int }}"
           - repeat:
               sequence:
+                - variables:
+                    dim_target: "{{ [1, [100, dim_start + brightness_step_signed * repeat.index] | min] | max }}"
                 - service: light.turn_on
                   target:
                     entity_id: "{{ light_entity }}"
                   data:
-                    brightness_step_pct: "{{ brightness_step_signed }}"
-                - delay:
-                    milliseconds: 400
-                - variables:
-                    current_brightness: >
-                      {{ ((states[light_entity].attributes.brightness | default(255) | float / 255) * 100) | int }}
+                    brightness_pct: "{{ dim_target }}"
                 - service: mqtt.publish
                   data:
                     topic: "zigbee2mqtt/{{ z2m_device_name }}/set"
-                    payload: '{"ledIntensityWhenOn": {{ current_brightness }}}'
+                    payload: '{"ledIntensityWhenOn": {{ dim_target }}}'
+                - delay:
+                    milliseconds: 400
               until:
-                # Loop runs forever — mode:restart terminates it when release fires
                 - condition: template
-                  value_template: "false"
+                  value_template: >-
+                    {% set next = dim_start + brightness_step_signed * repeat.index %}
+                    {{ next >= 100 or next <= 1 }}
 
       # -------------------------------------------------------------------------
       # CONFIG PRESS: Cycle scenes forward.
@@ -440,10 +455,13 @@ action:
                   - service: scene.turn_on
                     target:
                       entity_id: "{{ default_scene }}"
-          # Switch is turned on last — may trigger switch_on → restart, which is harmless
+          # Switch is turned on last — may trigger switch_on → restart, which is harmless.
+          # Its level is set to the room's brightness so the LED bar height matches.
           - service: light.turn_on
             target:
               entity_id: "{{ switch_entity }}"
+            data:
+              brightness: "{{ [state_attr(light_entity, 'brightness') | int(255), 1] | max }}"
 
       # -------------------------------------------------------------------------
       # LIGHT TURNED OFF (Hue app, HA, or another automation):
@@ -494,6 +512,13 @@ action:
                   "ledColorWhenOn": {{ room_color }},
                   "ledIntensityWhenOn": {{ led_intensity }}
                 }
+          # Match the switch's own dim level to the room so the LED bar height is
+          # right, e.g. after hold dimming, where the switch ramps its level on its own.
+          - service: light.turn_on
+            target:
+              entity_id: "{{ switch_entity }}"
+            data:
+              brightness: "{{ [state_attr(light_entity, 'brightness') | int(255), 1] | max }}"
 
       # -------------------------------------------------------------------------
       # SWITCH TURNED ON (from HA UI or another automation):

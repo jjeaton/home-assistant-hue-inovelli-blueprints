@@ -61,7 +61,9 @@ Both do the same job (tap on/off, double-tap 100%/10%, hold-to-dim, config-butto
 
 - **`mode: restart` is load-bearing.** It is what stops the dimming loop. The side effect is that any new trigger kills the run in progress, including triggers the run caused itself (turning the switch on fires `switch_on`). Handlers are therefore ordered so the LED publish and default scene happen *before* the step that can cause a retrigger. Keep that ordering when editing.
 - **Loop guards.** `switch_on`/`switch_off` only act when the Hue light is not already in that state.
-- **Timing is coupled.** The dimming loop ticks every 400 ms; the `light_settled` triggers (attribute changes on `brightness` / `color_temp_kelvin`) debounce with `for: 800ms` specifically so they do not fire mid-dim. Change one and revisit the other.
+- **`light_settled` is blocked while a run is in progress.** These triggers (attribute changes on `brightness` / `color_temp_kelvin`, debounced `for: 800ms`) would otherwise restart the automation mid-dim whenever Hue is slow to report a step. A top-level condition checks `this.attributes.current`; a failed top-level condition does not restart a running automation, whereas a condition inside `choose` would.
+- **The dimming loop sets absolute targets** (`dim_start` plus step times `repeat.index`, clamped to 1-100), not `brightness_step_pct`, so it does not depend on Hue's reported state keeping up. It ends itself at either limit.
+- **Two different LED things.** `ledIntensityWhenOn` is how brightly the bar glows. The bar's *height* is the switch's own dim level, which the switch ramps by itself while the paddle is held; the blueprint sets it by calling `light.turn_on` on the switch entity with the room's brightness (Smart Bulb mode keeps the load at full power).
 - **Action sensor.** The README requires a hand-made MQTT sensor with `expire_after: 1`, so the state returns to `unavailable` and a repeat of the same action registers as a state change. That is why the action trigger has no `not_from`. The `< 30s` freshness condition drops stale actions replayed after an HA restart.
 
 ### ZHA script blueprint

@@ -37,6 +37,7 @@ This repository contains **dynamic, reusable blueprints** for integrating Inovel
 - **🎚️ Unified Paddle Dimming**
   - Hold paddle: Smooth dim up/down (inline — no separate script needed for Z2M)
   - Release paddle: Stop dimming
+  - Z2M: holding down stops at minimum brightness and never turns the light off
 
 - **🎬 Scene Cycling (Config Button)**
   - Press: Cycle forward through Hue scenes
@@ -48,6 +49,7 @@ This repository contains **dynamic, reusable blueprints** for integrating Inovel
 - **💡 LED Sync**
   - LED color mirrors the Hue room's light color
   - LED intensity mirrors the Hue room's brightness
+  - Z2M: the LED bar level (how much of the bar is lit) also follows the Hue room's brightness. While you hold the paddle the switch moves the bar at its own dimming speed, then it settles on the room's actual level about a second after release.
   - LED switches to a configurable "off" color when the light is off
 
 - **🔄 Bidirectional Sync**

@@ -23,6 +23,7 @@ Covers everything since 0.1.1; no versions were tagged in between.
 - The room is derived from the selected Hue light group instead of being typed in.
 - ZHA dimming script renamed to `dim_hue_room_lights_zha.yaml`.
 - ZHA LED color now uses the same rule as Z2M: warm or cool white by color temperature, otherwise the light's hue.
+- Z2M: holding the paddle down stops at minimum brightness instead of turning the light off.
 - The Z2M blueprint expects a custom MQTT action sensor with `expire_after: 1` so repeated presses of the same button register.
 
 ### Fixed
@@ -30,6 +31,8 @@ Covers everything since 0.1.1; no versions were tagged in between.
 - ZHA: the LED color set when the light turns on included template comment text alongside the number.
 - mmWave visualizer: leaving an Area entity blank shifted the following areas onto the wrong zone and timeline color.
 - Various Z2M fixes to MQTT topics, LED sync and warm/cool LED color.
+- Z2M: hold-to-dim stopped after a step or two because the LED sync trigger restarted the automation mid-dim.
+- Z2M: the LED bar level now follows the Hue room's brightness instead of staying wherever the switch's own dimming left it.
 
 ---
 
