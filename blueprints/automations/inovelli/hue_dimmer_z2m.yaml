@@ -196,6 +196,13 @@ condition:
   # not restart the automation, so the running sequence carries on.
   - condition: template
     value_template: "{{ trigger.id != 'light_settled' or this.attributes.current | default(0) | int(0) == 0 }}"
+  # Ignore switch on/off changes this automation caused itself. A state change
+  # made in response to a service call carries the calling run's context, and
+  # `this` holds the context of the latest run. Without this, a stray "on" the
+  # switch reports while the blueprint is turning it off is synced to the Hue
+  # room, turning it back on.
+  - condition: template
+    value_template: "{{ trigger.id not in ['switch_on', 'switch_off'] or trigger.to_state.context.id != this.context.id }}"
 
 variables:
   light_entity: !input light_entity
@@ -514,11 +521,17 @@ action:
                 }
           # Match the switch's own dim level to the room so the LED bar height is
           # right, e.g. after hold dimming, where the switch ramps its level on its own.
-          - service: light.turn_on
-            target:
-              entity_id: "{{ switch_entity }}"
-            data:
-              brightness: "{{ [state_attr(light_entity, 'brightness') | int(255), 1] | max }}"
+          # Only when the switch is already on: this is a level sync, not an on/off
+          # sync. While the room is turning off, Hue can report an attribute change
+          # with the light still "on", and turning the switch on here would undo the
+          # off that was just requested.
+          - if: "{{ is_state(switch_entity, 'on') }}"
+            then:
+              - service: light.turn_on
+                target:
+                  entity_id: "{{ switch_entity }}"
+                data:
+                  brightness: "{{ [state_attr(light_entity, 'brightness') | int(255), 1] | max }}"
 
       # -------------------------------------------------------------------------
       # SWITCH TURNED ON (from HA UI or another automation):

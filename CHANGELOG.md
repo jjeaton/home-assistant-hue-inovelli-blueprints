@@ -33,6 +33,7 @@ Covers everything since 0.1.1; no versions were tagged in between.
 - Various Z2M fixes to MQTT topics, LED sync and warm/cool LED color.
 - Z2M: hold-to-dim stopped after a step or two because the LED sync trigger restarted the automation mid-dim.
 - Z2M: the LED bar level now follows the Hue room's brightness instead of staying wherever the switch's own dimming left it.
+- Z2M: turning the room off (from the switch, Home Assistant, presence or another automation) could turn it straight back on. While turning off, Hue reports a color change with the light still "on"; the brightness sync reacted by turning the switch back on, and that was synced to the Hue room. The brightness sync now only adjusts a switch that is already on, and switch state changes the blueprint caused itself are ignored.
 
 ---
 

@@ -7,9 +7,11 @@
 - Dimming is an inline `repeat` loop setting absolute brightness targets; it ends at 1%/100% or when restart kills it on release
 - `light_settled` is ignored while a run is in progress (top-level condition on `this.attributes.current`) so it cannot kill the dimming loop
 - LED bar height = the switch's own dim level; it is set from the Hue room's brightness in `light_on`, `light_settled` and the double-tap handlers
+- `light_settled` only sets the switch level when the switch is already on: Hue reports an attribute change with the light still "on" partway through turning off, and turning the switch on there undid the off
 - Sync is trigger-based (specific `from/to` state transitions) — no `input_boolean.sync_<room>` needed
 - LED update and default scene run **before** switch turn-on in `light_on` handler to avoid being killed by the subsequent `switch_on` restart
 - `switch_on` and `switch_off` handlers have state checks (`states(light_entity) != 'on'`) to prevent loops
+- `switch_on`/`switch_off` are also ignored when the switch change carries this automation's own run context (`this.context.id`), so a brief "on" reported while the blueprint turns the switch off can't turn the room back on
 - Z2M action freshness condition (`< 30s`) prevents spurious triggers after HA restart
 - MQTT payload for LED uses Z2M property names: `ledColorWhenOn`, `ledIntensityWhenOn`, `ledColorWhenOff`, `ledIntensityWhenOff`
 
