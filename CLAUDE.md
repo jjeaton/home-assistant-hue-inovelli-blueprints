@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Home Assistant blueprints for Inovelli Blue Series switches, plus one standalone Python diagnostic tool. There is no build step, package manifest, linter config, CI, or test suite. A blueprint is "run" by importing it into a Home Assistant instance and creating an automation/script from it, so behaviour changes can only be truly verified on real hardware.
 
-`origin` is a fork (`jjeaton/...`) of `Ratoka/...`. The README import badges point at the fork, so they must be reverted to `Ratoka` in any pull request to upstream; the Blueprint Exchange thread and credits still refer to upstream. Import URLs are tied to file paths on `main`, so renaming or moving a blueprint file breaks existing users' re-import links and the README badges.
+The upstream repo is `Ratoka/home-assistant-hue-inovelli-blueprints`, and the README import badges, the Blueprint Exchange thread and the credits all point there. A fork that changes the badges to point at itself must change them back before opening a pull request upstream. Import URLs are tied to file paths on `main`, so renaming or moving a blueprint file breaks existing users' re-import links and the README badges.
 
 ## Commands
 
